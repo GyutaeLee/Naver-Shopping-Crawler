@@ -1,0 +1,23 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.28307.902
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "NaverShoppingCrawler", "NaverShoppingCrawler\NaverShoppingCrawler.pyproj", "{61E36B7B-6A80-4979-900D-7FE02C7335BD}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{61E36B7B-6A80-4979-900D-7FE02C7335BD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{61E36B7B-6A80-4979-900D-7FE02C7335BD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {DD4AF8DB-90E4-4D09-A701-09FED0F4D41A}
+	EndGlobalSection
+EndGlobal
