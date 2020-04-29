@@ -1,6 +1,7 @@
 import os
 import requests
 import time
+import platform
 
 from bs4 import BeautifulSoup
 
@@ -29,7 +30,10 @@ categoryLinkList = [[]]
 crawlDataList = [[[] for first in range(100)] for second in range(50)]
 
 # webDriver . Chrome driver Ver.80
-driver = webdriver.Chrome("chromedriver.exe")
+if platform.system() == "Windows":
+    driver = webdriver.Chrome("chromedriver.exe")
+elif platform.system() == "Darwin":
+    driver = webdriver.Chrome("/Users/igyutae/Documents/GitRepository/NaverShoppingCrawler/NaverShoppingCrawler/NaverShoppingCrawler/chromedriver")
 
 # 카테고리 정보들 가져오기
 def GetAllCategoryLink():
@@ -85,8 +89,6 @@ def CrawlAllCategory(html, categoryIndex):
             
 # 링크 없을때!!!! 예외처리하자
 def ClickTab(xpath):
-    time.sleep(1)
-
     if xpath == None:
         print("ERROR XPATH NULL [007]")
         return
@@ -98,26 +100,46 @@ def ClickTab(xpath):
     element = driver.find_element_by_xpath(xpath) #??이거 없을떄 예외 처리하자
     
     element.send_keys(Keys.ENTER)
+    time.sleep(1)
+
 
 # 모든 아이템의 정보 가져오기
 def CrawlItemInfo(url, pageCount, listIndex0, listIndex1):
     driver.get(url)
 
-    # 가격 비교 탭 + 페이지 탭 클릭
-    #?? 페이지가 정해진 개수보다 작을때 예외처리해야됨 페이지 개수 갖고오자...
-    ClickTab("//ul[@class='snb_list']/li[@class='snb_compare']/a[@href='#']")
-    ClickTab("//div[@class='co_paginate']/a[@href='#']")
+    # 가격 비교 탭이 있는지 검사
+    rqResult = requests.get(driver.current_url)
+    bsObj = BeautifulSoup(rqResult.content, "html.parser")
 
-    # 기본 페이지 Index 설정 (1페이지로)
+    if bsObj == None:
+        print("ERROR : URL FAULT [009] (url : ", driver.current_url, ")")
+        return
+
+    # 가격 비교 탭으로 이동 //?? 여기도 예외처리 필요
+    ClickTab("//ul[@class='snb_list']/li[@class='snb_compare']/a[@href='#']")
     tabLink = driver.current_url
-    tabLink = tabLink.replace("2", "1", 1)    
-    
+    bsObj = BeautifulSoup(tabLink, "html.parser")
+
+    # 페이지 버튼 검색
+    pageButton = bsObj.find('div', {"class" : "sort_content"})
+
+    if pageButton == None:
+        print("가격을 비교할 수 있는 제품이 없습니다. (url : ", tabLink, ")")
+        return
+    elif pageButton.find('div', {"class" : "co_paginate"}) != None:
+        print("link : ", tabLink)
+        # 두번째 탭 클릭
+        ClickTab("//div[@class='co_paginate']/a[@href='#']")
+        tabLink = driver.current_url
+        # 기본 페이지 Index 설정 (1페이지로)
+        tabLink = tabLink.replace("2", "1", 1)
+
     # 1페이지 정보 가져오기
     rqResult = requests.get(tabLink)
     bsObj = BeautifulSoup(rqResult.content, "html.parser")
     
     if bsObj == None:
-        print("ERROR : URL FAULT [002] (url : ", url, ")")
+        print("ERROR : URL FAULT [002] (url : ", tabLink, ")")
         return
 
     # 크롤링 데이터 생성
@@ -128,9 +150,8 @@ def CrawlItemInfo(url, pageCount, listIndex0, listIndex1):
         itemList = bsObj.find('ul', {"class" : "goods_list"})
 
         if itemList == None:#?? 왜 가끔 폴트뜨지?
-            print("ERROR : URL FAULT [003] (url : ", url, ")")
+            print("ERROR : URL FAULT [003] (url : ", tabLink, ")")
             break
-
 
         contentIndex = -1
         for content in itemList.contents:
@@ -170,6 +191,10 @@ def CrawlItemInfo(url, pageCount, listIndex0, listIndex1):
         tabLink = tabLink.replace(str(pageNumber), str(pageNumber + 1), 1)
         rqResult = requests.get(tabLink)
         bsObj = BeautifulSoup(rqResult.content, "html.parser")
+
+        if bsObj == None:
+            print("페이지가 입력하신 기준 페이지보다 적습니다. [010] (url : ", tabLink, ")")
+            break
 
     print(listIndex0, " " ,listIndex1, "크롤링 데이터 추가")
     crawlDataList[listIndex0][listIndex1].append(crawlData)
@@ -281,11 +306,13 @@ def StartCrawling(pageCount, boolList):
     for index0 in range(0, len(boolList)):
         if boolList[index0] == False:
             continue
+
+        if index0 != 0:
+            print(index0, "에서 5초 대기")
+            time.sleep(5)
+            
         for index1 in range(0,1):#len(categoryLinkList[index0])):
             CrawlItemInfo(categoryLinkList[index0][index1], pageCount, index0, index1)
-
-        print(index0, "에서 60초 대기")
-        time.sleep(60)
 
     SaveItemListAsExcel("네이버 쇼핑 데이터")
 
