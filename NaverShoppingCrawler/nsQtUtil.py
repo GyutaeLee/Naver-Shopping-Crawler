@@ -1,24 +1,58 @@
 import sys
-from PyQt5 import QtCore, QtWidgets, QtGui
+
+from PyQt5 import QtCore, QtWidgets
+from PyQt5.QtGui import QPainter, QColor, QFont, QPen, QBrush, QPainterPath
 from PyQt5.QtWidgets import *
-from PyQt5.QtCore import QSize    
+from PyQt5.QtCore import QSize, Qt
 
 class MainWindow(QMainWindow):
     
+    ## CLASS
     class LabelWithLineEdit(QWidget):
         def __init__(self, mainHandle, text):
             super(QWidget, self).__init__()
 
             self.mainWindowHandle = mainHandle
 
-            self.lineEdit = self.mainWindowHandle.CreateNewLine()
             self.label    = self.mainWindowHandle.CreateNewLabel(text)
+            self.lineEdit = self.mainWindowHandle.CreateNewLine()
             
             self.widgetLayout = QHBoxLayout(self)
 
-            self.widgetLayout.addWidget(self.lineEdit)
             self.widgetLayout.addWidget(self.label)
-        
+            self.widgetLayout.addWidget(self.lineEdit)
+
+    class LineEditWithButton(QWidget):
+        def __init__(self, mainHandle, text, buttonMethod):
+            super(QWidget, self).__init__()
+            
+            self.mainWindowHandle = mainHandle
+
+            self.lineEdit = self.mainWindowHandle.CreateNewLine()
+            self.button   = mainHandle.CreateNewButton(text, buttonMethod)
+
+            self.widgetLayout = QHBoxLayout(self)
+            
+            self.lineEdit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+            self.lineEdit.setMinimumWidth(100)
+
+            self.widgetLayout.addWidget(self.lineEdit)
+            self.widgetLayout.addWidget(self.button)            
+
+    class DrawLine(QWidget):
+        def __init__(self, x1, y1, x2, y2, color, scale, style):
+            super().__init__()
+            
+            self.qPainter = QPainter()
+            self.qPainter.begin(self)
+
+            self.qPen = QPen(color, scale, style)
+            self.qPainter.setPen(self.qPen)
+            self.qPainter.drawLine(x1,y1,x2,y2)
+
+            self.qPainter.end()            
+
+
     def __init__(self):
         QMainWindow.__init__(self)
         
@@ -26,16 +60,24 @@ class MainWindow(QMainWindow):
         self.mainLayout = QVBoxLayout(self.mainWidget)
 
         self.firstLayout = QHBoxLayout()
-        self.secondLayout = QHBoxLayout()
 
         self.mainLayout.addLayout(self.firstLayout)
-        self.mainLayout.addLayout(self.secondLayout)
 
         self.setCentralWidget(self.mainWidget)
         
-        self.textBoxFormLayout = QFormLayout()        
-        self.firstLayout.addLayout(self.textBoxFormLayout)                     
-        
+        self.firstQFormLayout = []
+
+        for index in range(0,2):
+            self.firstQFormLayout.append(QFormLayout())
+            self.firstLayout.addLayout(self.firstQFormLayout[index])
+
+        # firstQFormLayout[1]
+        self.labelList = []
+        self.lineButtonList  = []
+                 
+    
+    ##
+    ##
     def CreateNewLabel(self, nameLabelText):       
         newLabel = QLabel(self)
         newLabel.setText(nameLabelText)
@@ -45,61 +87,66 @@ class MainWindow(QMainWindow):
         newLine = QLineEdit(self)
         return newLine
 
-    def CreateButton(self, buttonText, buttonMethod):
+    def CreateNewButton(self, buttonText, buttonMethod):
         newButton = QPushButton(buttonText, self)
         newButton.clicked.connect(buttonMethod)
         return newButton
 
-    def InitInputDataLabel(self):      
-                
-        self.startDateLabel                          = self.CreateNewLabel("시작 날짜(YEAR / MONTH / DAY)")
-        self.lastDateLabel                           = self.CreateNewLabel("종료 날짜(YEAR / MONTH / DAY)")
-        self.stockItemPageNumberLabel                 = self.CreateNewLabel("주식 종목 페이지 개수")
-        self.standardOfAscendingLabel                = self.CreateNewLabel("기준 등락률")
-        self.standardOfTransactionAmountLabel        = self.CreateNewLabel("기준 거래 대금")
-        self.kospiFileNameLabel                      = self.CreateNewLabel("코스피 엑셀 이름")
-        self.kospiSheetNameLabel                     = self.CreateNewLabel("코스피 시트 이름")
-        self.kosdacFileNameLabel                     = self.CreateNewLabel("코스닥 엑셀 이름")
-        self.kosdacSheetNameLabel                    = self.CreateNewLabel("코스닥 시트 이름")
+    def CreateNewCheckBox(self, checkBoxText, checkBoxMethod):
+        newCheckBox = QCheckBox(checkBoxText, self)
+        newCheckBox.stateChanged.connect(lambda: checkBoxMethod)
+        return newCheckBox
 
-        self.startDate = self.LabelWithLineEdit(self, "20200101 (숫자만 입력하세요 : yyyymmdd)")
-        self.lastDate  = self.LabelWithLineEdit(self, "20200105 (숫자만 입력하세요 : yyyymmdd)")
-        self.stockItemPageNumber = self.LabelWithLineEdit(self, "주식 정보 페이지 개수 (-1은 모든 주식 종목 검색)")
-        self.standardOfAscending  = self.LabelWithLineEdit(self, "1 (숫자만 입력하세요 [1~100])")
-        self.standardOfTransactionAmount  = self.LabelWithLineEdit(self, "1 (숫자만 입력하세요)")
-        self.kospiFileName  = self.LabelWithLineEdit(self, "코스피 엑셀 이름")
-        self.kospiSheetName  = self.LabelWithLineEdit(self, "코스피 시트 이름")
-        self.kosdacFileName  = self.LabelWithLineEdit(self, "코스닥 엑셀 이름")
-        self.kosdacSheetName  = self.LabelWithLineEdit(self, "코스닥 시트 이름")
-
-        self.textBoxFormLayout.addRow(self.startDateLabel, self.startDate)
-        self.textBoxFormLayout.addRow(self.lastDateLabel, self.lastDate)
-        self.textBoxFormLayout.addRow(self.stockItemPageNumberLabel, self.stockItemPageNumber)
-        self.textBoxFormLayout.addRow(self.standardOfAscendingLabel, self.standardOfAscending)
-        self.textBoxFormLayout.addRow(self.standardOfTransactionAmountLabel, self.standardOfTransactionAmount)
-        self.textBoxFormLayout.addRow(self.kospiFileNameLabel, self.kospiFileName)
-        self.textBoxFormLayout.addRow(self.kospiSheetNameLabel, self.kospiSheetName)
-        self.textBoxFormLayout.addRow(self.kosdacFileNameLabel, self.kosdacFileName)
-        self.textBoxFormLayout.addRow(self.kosdacSheetNameLabel, self.kosdacSheetName)        
+    def CreateLabelAndLineButtonList(self, labelList, lineButtonList, labelName, buttonName, buttonMethod):
+        labelList.append(self.CreateNewLabel(labelName))
+        lineButtonList.append(self.LineEditWithButton(self, buttonName, lambda: buttonMethod))
         
-        self.debugLabel = []
+    ##
+    ##
+    def InitializeWindow(self, textList, crawlingMethod):
+        self.crawlingMethod = crawlingMethod
 
-        self.debugLabel.append(self.CreateNewLabel("조건을 입력 후 버튼을 눌러주세요"))
-        self.debugLabel.append(self.CreateNewLabel("조건을 입력 후 버튼을 눌러주세요"))
+        # #
+        self.qFormLabel = self.CreateNewLabel("카테고리 선택")
+        self.qFormLabel.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        self.qFormLabel.setMinimumWidth(150)
+        self.firstQFormLayout[0].addRow(self.qFormLabel)
+
+      #  self.DrawLine(10,10,20,20, Qt.black, 10, Qt.SolidLine)
+
+        self.checkBoxList  = ['' for first in range(len(textList))]
+        self.checkBoxState = [False for first in range(len(textList))]
+
+        for index in range(0, len(textList)):
+            self.checkBoxList[index] = (self.CreateNewCheckBox(textList[index], None))
+            self.firstQFormLayout[0].addRow(self.checkBoxList[index])
+
+        self.CreateLabelAndLineButtonList(self.labelList, self.lineButtonList, "파일 이름", "입력", lambda: self.StartCrawling)
+        self.startButton = self.CreateNewButton("시작", self.StartCrawling)
+        self.startButton.resize(50,10)
+
+        for index in range(0, len(self.labelList)):
+            self.firstQFormLayout[1].addRow(self.labelList[index], self.lineButtonList[index])
         
-        self.secondLayout.addWidget(self.debugLabel[0])
-        self.secondLayout.addWidget(self.debugLabel[1])
+        self.firstQFormLayout[1].addRow(self.startButton)
 
-    def RefrestInputDataLabel(self):
-        self.startDate.label.setText(self.startDate.lineEdit.text())
-        self.lastDate.label.setText(self.lastDate.lineEdit.text())
-        self.stockItemPageNumber.label.setText(self.stockItemPageNumber.lineEdit.text())
-        self.standardOfAscending.label.setText(self.standardOfAscending.lineEdit.text())
-        self.standardOfTransactionAmount.label.setText(self.standardOfTransactionAmount.lineEdit.text())
-        self.kospiFileName.label.setText(self.kospiFileName.lineEdit.text())
-        self.kospiSheetName.label.setText(self.kospiSheetName.lineEdit.text())
-        self.kosdacFileName.label.setText(self.kosdacFileName.lineEdit.text())
-        self.kosdacSheetName.label.setText(self.kosdacSheetName.lineEdit.text())                                            
+    ##
+    def StartCrawling(self):
+        print("크롤링 시작\n")
+
+        # create bool List
+        boolList = [False for b in range(len(self.checkBoxList))]
+        for index in range(0, len(self.checkBoxList)):
+            print("bool state : ", self.checkBoxList[index].isChecked())
+            boolList[index] = self.checkBoxList[index].isChecked()
+
+        self.crawlingMethod(None, boolList)
+
+        for i in range(len(self.checkBoxList)):
+            print(self.checkBoxList[i].isChecked() , " ")
+
+    def ChangeBoolState(self, index):
+        self.checkBoxState[index] = self.checkBoxList[index].isChecked()
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)

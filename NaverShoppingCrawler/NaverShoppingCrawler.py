@@ -67,7 +67,7 @@ def CrawlAllCategory(html, categoryIndex):
     itemList = bsObj.find_all('ul', {"class" :"co_category_list"})
     
     if bsObj == None:
-        print("ERROR : URL FAULT [000] (url : ", url, ")")
+        print("ERROR : URL FAULT [001] (url : ", url, ")")
         return
 
     categoryTextList.append([])
@@ -82,10 +82,21 @@ def CrawlAllCategory(html, categoryIndex):
                     categoryTextList[categoryIndex].append(httpLink.text.strip())
                     categoryLinkList[categoryIndex].append(httpLink.attrs['href'].strip())
                     continue
-                
+            
+# 링크 없을때!!!! 예외처리하자
 def ClickTab(xpath):
     time.sleep(1)
+
+    if xpath == None:
+        print("ERROR XPATH NULL [007]")
+        return
+    
+    if driver.find_element_by_xpath(xpath) == None:
+        print("ERROR element NULL [008]")
+        return
+
     element = driver.find_element_by_xpath(xpath) #??이거 없을떄 예외 처리하자
+    
     element.send_keys(Keys.ENTER)
 
 # 모든 아이템의 정보 가져오기
@@ -106,7 +117,7 @@ def CrawlItemInfo(url, pageCount, listIndex0, listIndex1):
     bsObj = BeautifulSoup(rqResult.content, "html.parser")
     
     if bsObj == None:
-        print("ERROR : URL FAULT [001] (url : ", url, ")")
+        print("ERROR : URL FAULT [002] (url : ", url, ")")
         return
 
     # 크롤링 데이터 생성
@@ -117,7 +128,7 @@ def CrawlItemInfo(url, pageCount, listIndex0, listIndex1):
         itemList = bsObj.find('ul', {"class" : "goods_list"})
 
         if itemList == None:#?? 왜 가끔 폴트뜨지?
-            print("ERROR : URL FAULT [002] (url : ", url, ")")
+            print("ERROR : URL FAULT [003] (url : ", url, ")")
             break
 
 
@@ -160,6 +171,7 @@ def CrawlItemInfo(url, pageCount, listIndex0, listIndex1):
         rqResult = requests.get(tabLink)
         bsObj = BeautifulSoup(rqResult.content, "html.parser")
 
+    print(listIndex0, " " ,listIndex1, "크롤링 데이터 추가")
     crawlDataList[listIndex0][listIndex1].append(crawlData)
                
 # 여러 판매처의 아이템 정보 가져오기
@@ -211,30 +223,16 @@ def CrawlDetailItemInfo(url, crawlData, contentIndex):
             crawlData.itemDataList[contentIndex].append("/--/")
     return True
 
-# pageCount : 몇 페이지까지 크롤링 할 것인지
-# boolList  : GUI에서 체크한 정보들만 boolList[index0][index1] = True
-def StartCrawling(pageCount, boolList):
-    if pageCount == None:
-        pageCount = 1
-
-    if boolList == None:
-        boolList = [[True for first in range(100)] for second in range(50)]
-        
-    # 각 링크에서 데이터 크롤링
-    #?? GUI에서 선택한 정보만 걸러서 가져와야한다.
-    for index0 in range(0, 1):#len(categoryLinkList)):
-        for index1 in range(0, 10):#len(categoryLinkList[index0])):
-            if (boolList[index0][index1] == True):
-                CrawlItemInfo(categoryLinkList[index0][index1], pageCount, index0, index1)
-
-
+##
+##
+##
 # 폴더가 없으면 생성한다
 def CheckAndCreateFolder(folderPath):
     try:
         if not os.path.exists(folderPath):
             os.makedirs(folderPath)
     except OSError:
-        print ("Error: Creating folder : " + folderPath)
+        print ("Error: Creating folder [004]: " + folderPath)
 
 # 액셀 저장
 def SaveItemListAsExcel(fileName):
@@ -267,6 +265,47 @@ def SaveItemListAsExcel(fileName):
     print("저장 완료")
 
 
+# pageCount : 몇 페이지까지 크롤링 할 것인지
+# boolList  : GUI에서 체크한 정보들만 boolList[index0][index1] = True
+def StartCrawling(pageCount, boolList):
+    if pageCount == None:
+        pageCount = 1
+        print("NO PAGE COUNT [005]")
+
+    if boolList == None:
+        boolList = [True for b in range(100)]
+        print("NO BOOL LIST [006]")
+        
+    # 각 링크에서 데이터 크롤링
+    #?? GUI에서 선택한 정보만 걸러서 가져와야한다.
+    for index0 in range(0, len(boolList)):
+        if boolList[index0] == False:
+            continue
+        for index1 in range(0,1):#len(categoryLinkList[index0])):
+            CrawlItemInfo(categoryLinkList[index0][index1], pageCount, index0, index1)
+
+        print(index0, "에서 60초 대기")
+        time.sleep(60)
+
+    SaveItemListAsExcel("네이버 쇼핑 데이터")
+
+##
+##
+##
+def OpenWindow(window):
+    screenWidth = 900
+    screenHeight = 480
+
+    # Window 크기 및 위치 설정
+    myDesktop = QApplication.desktop()
+    rect = myDesktop.screenGeometry()
+    window.setGeometry(rect.width() / 2 - screenWidth / 2, rect.height() / 2 - screenHeight / 2, screenWidth, screenHeight)
+    
+    window.InitializeWindow(bigCategoryTextList, StartCrawling)
+    
+##
+##
+##
 def app_init(window):
     window.setWindowTitle("Naver Shopping Crawler (ver.1.0)")
     
@@ -276,26 +315,21 @@ def app_init(window):
       
     ##
     # 윈도우 설정
-    #screenWidth = 900
-    #screenHeight = 480
+    maxIndex1Count = 0
+    for i in range(0, len(categoryLinkList)):
+        if maxIndex1Count > len(categoryLinkList[i]):
+            maxIndex1Count = len(categoryLinkList[i])
 
-    ## Window 크기 및 위치 설정
-    #myDesktop = QApplication.desktop()
-    #rect = myDesktop.screenGeometry()
-    #window.setGeometry(rect.width() / 2 - screenWidth / 2, rect.height() / 2 - screenHeight / 2, screenWidth, screenHeight)
+    maxIndex1Count += 1
+
+    OpenWindow(window)
     
-    #window.InitInputDataLabel()
-    #window.CheckButton = window.CreateButton("입력 확인", window.RefrestInputDataLabel)
-    
-    #window.secondLayout.addWidget(window.StartButton)
+    ##
+    ##
+    #StartCrawling(None, boolList, len(categoryLinkList) + 1, maxIndex1Count)
 
-    ##
-    ##
-    ##
-    StartCrawling(None, None)
-
-    #?? 파일명 GUI에서
-    SaveItemListAsExcel("네이버 쇼핑 데이터")
+    ##?? 파일명 GUI에서
+    #SaveItemListAsExcel("네이버 쇼핑 데이터")
 
 
 def main():    
@@ -309,5 +343,8 @@ def main():
     window.show()
     app.exec_()
 
+##
+##
+##
 #MAIN
 main()
