@@ -137,13 +137,9 @@ class MainWindow(QMainWindow):
         # create bool List
         boolList = [False for b in range(len(self.checkBoxList))]
         for index in range(0, len(self.checkBoxList)):
-            print("bool state : ", self.checkBoxList[index].isChecked())
             boolList[index] = self.checkBoxList[index].isChecked()
 
         self.crawlingMethod(None, boolList)
-
-        for i in range(len(self.checkBoxList)):
-            print(self.checkBoxList[i].isChecked() , " ")
 
     def ChangeBoolState(self, index):
         self.checkBoxState[index] = self.checkBoxList[index].isChecked()

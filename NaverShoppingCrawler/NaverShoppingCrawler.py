@@ -118,21 +118,27 @@ def CrawlItemInfo(url, pageCount, listIndex0, listIndex1):
     # 가격 비교 탭으로 이동 //?? 여기도 예외처리 필요
     ClickTab("//ul[@class='snb_list']/li[@class='snb_compare']/a[@href='#']")
     tabLink = driver.current_url
-    bsObj = BeautifulSoup(tabLink, "html.parser")
+    rqResult = requests.get(tabLink)
+    bsObj = BeautifulSoup(rqResult.content, "html.parser")
 
     # 페이지 버튼 검색
     pageButton = bsObj.find('div', {"class" : "sort_content"})
 
-    if pageButton == None:
+    if pageButton.find('div', {"class" : "search_none"}) != None:
         print("가격을 비교할 수 있는 제품이 없습니다. (url : ", tabLink, ")")
         return
     elif pageButton.find('div', {"class" : "co_paginate"}) != None:
-        print("link : ", tabLink)
-        # 두번째 탭 클릭
-        ClickTab("//div[@class='co_paginate']/a[@href='#']")
-        tabLink = driver.current_url
-        # 기본 페이지 Index 설정 (1페이지로)
-        tabLink = tabLink.replace("2", "1", 1)
+        pageButton = pageButton.find('div', {"class" : "co_paginate"})
+
+        # 페이지가 한 페이지 뿐임 //?? 이때 제대로 크롤링하는지 확인 필요
+        if pageButton.find('a', {"href" : "#"}) == None:
+            print("페이지가 한 개 뿐입니다. (url : ", tabLink, ")")
+        else:
+            # 두번째 탭 클릭
+            ClickTab("//div[@class='co_paginate']/a[@href='#']")
+            tabLink = driver.current_url
+            # 기본 페이지 Index 설정 (1페이지로)
+            tabLink = tabLink.replace("2", "1", 1)
 
     # 1페이지 정보 가져오기
     rqResult = requests.get(tabLink)
@@ -196,7 +202,7 @@ def CrawlItemInfo(url, pageCount, listIndex0, listIndex1):
             print("페이지가 입력하신 기준 페이지보다 적습니다. [010] (url : ", tabLink, ")")
             break
 
-    print(listIndex0, " " ,listIndex1, "크롤링 데이터 추가")
+    print(categoryTextList[listIndex0][listIndex1], " 카테고리 크롤링 데이터 추가")
     crawlDataList[listIndex0][listIndex1].append(crawlData)
                
 # 여러 판매처의 아이템 정보 가져오기
@@ -207,6 +213,7 @@ def CrawlDetailItemInfo(url, crawlData, contentIndex):
     tableList = bsObj.find('table', {"class" : "tbl_lst"})
 
     if tableList == None:
+        print("ERROR TABLE LIST NONE [013]")
         return False #?? 원인 알아야함 아예 tbl list가 안 가져와지는 경우 많음
 
     itemList = tableList.find_all('tr', {"class" : "_itemSection"})
@@ -269,10 +276,11 @@ def SaveItemListAsExcel(fileName):
 
     for index0 in range(0, len(crawlDataList)):
         for index1 in range(0, len(crawlDataList[index0])):
-            textIndex2 = 0
             for index2 in range(0, len(crawlDataList[index0][index1])):
-                newSheet = workBook.create_sheet(categoryTextList[index0][textIndex2])
-                textIndex2 += 1
+                print("index1 : ", index1, " " ,len(crawlDataList[index0][index1]), " " , len(crawlDataList[index0]))
+                #print("시트 이름 : ", categoryTextList[index0][index1], " ", index0, " " , index1)
+                #newSheet = workBook.create_sheet(categoryTextList[index0][index1]) //?? 왜 팅기는지 알아야함
+                newSheet = workBook.create_sheet(categoryTextList[index0][0])
 
                 excelSheet.append(newSheet)
                 excelSheet[excelSheetIndex].append(["제품 이름", "제품 가격", "판매처", "제품 등록일"])
@@ -287,7 +295,7 @@ def SaveItemListAsExcel(fileName):
 
     workBook.save(FOLDER_PATH + "/" + fileName + ".xlsx")
 
-    print("저장 완료")
+    print("[저장 완료]")
 
 
 # pageCount : 몇 페이지까지 크롤링 할 것인지
@@ -302,16 +310,15 @@ def StartCrawling(pageCount, boolList):
         print("NO BOOL LIST [006]")
         
     # 각 링크에서 데이터 크롤링
-    #?? GUI에서 선택한 정보만 걸러서 가져와야한다.
     for index0 in range(0, len(boolList)):
         if boolList[index0] == False:
             continue
 
         if index0 != 0:
-            print(index0, "에서 5초 대기")
+            print(bigCategoryTextList[index0], " 카테고리에서 5초 대기")
             time.sleep(5)
             
-        for index1 in range(0,1):#len(categoryLinkList[index0])):
+        for index1 in range(0,3):#len(categoryLinkList[index0])):
             CrawlItemInfo(categoryLinkList[index0][index1], pageCount, index0, index1)
 
     SaveItemListAsExcel("네이버 쇼핑 데이터")
