@@ -34,7 +34,7 @@ class MainWindow(QMainWindow):
             self.widgetLayout = QHBoxLayout(self)
             
             self.lineEdit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-            self.lineEdit.setMinimumWidth(100)
+            self.lineEdit.setMinimumWidth(50)
 
             self.widgetLayout.addWidget(self.lineEdit)
             self.widgetLayout.addWidget(self.button)            
@@ -71,10 +71,11 @@ class MainWindow(QMainWindow):
             self.firstQFormLayout.append(QFormLayout())
             self.firstLayout.addLayout(self.firstQFormLayout[index])
 
-        # firstQFormLayout[1]
         self.labelList = []
         self.lineButtonList  = []
-                 
+           
+        self.pageCount = 0
+        self.excelFileName = ''
     
     ##
     ##
@@ -121,13 +122,15 @@ class MainWindow(QMainWindow):
             self.checkBoxList[index] = (self.CreateNewCheckBox(textList[index], None))
             self.firstQFormLayout[0].addRow(self.checkBoxList[index])
 
-        self.CreateLabelAndLineButtonList(self.labelList, self.lineButtonList, "파일 이름", "입력", lambda: self.StartCrawling)
-        self.startButton = self.CreateNewButton("시작", self.StartCrawling)
-        self.startButton.resize(50,10)
+        self.pageCount     = self.LabelWithLineEdit(self, "PAGE COUNT")
+        self.excelFileName = self.LabelWithLineEdit(self, "FILE NAME")
+        self.startButton   = self.CreateNewButton("시작", self.StartCrawling)
 
         for index in range(0, len(self.labelList)):
             self.firstQFormLayout[1].addRow(self.labelList[index], self.lineButtonList[index])
         
+        self.firstQFormLayout[1].addRow(self.pageCount)
+        self.firstQFormLayout[1].addRow(self.excelFileName)
         self.firstQFormLayout[1].addRow(self.startButton)
 
     ##
@@ -139,7 +142,7 @@ class MainWindow(QMainWindow):
         for index in range(0, len(self.checkBoxList)):
             boolList[index] = self.checkBoxList[index].isChecked()
 
-        self.crawlingMethod(None, boolList)
+        self.crawlingMethod(int(self.pageCount.lineEdit.text()), self.excelFileName.lineEdit.text(), boolList)
 
     def ChangeBoolState(self, index):
         self.checkBoxState[index] = self.checkBoxList[index].isChecked()

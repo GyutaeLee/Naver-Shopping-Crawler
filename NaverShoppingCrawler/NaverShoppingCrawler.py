@@ -2,6 +2,7 @@ import os
 import requests
 import time
 import platform
+import re
 
 from bs4 import BeautifulSoup
 
@@ -87,7 +88,6 @@ def CrawlAllCategory(html, categoryIndex):
                     categoryLinkList[categoryIndex].append(httpLink.attrs['href'].strip())
                     continue
             
-# 링크 없을때!!!! 예외처리하자
 def ClickTab(xpath):
     if xpath == None:
         print("ERROR XPATH NULL [007]")
@@ -97,7 +97,7 @@ def ClickTab(xpath):
         print("ERROR element NULL [008]")
         return
 
-    element = driver.find_element_by_xpath(xpath) #??이거 없을떄 예외 처리하자
+    element = driver.find_element_by_xpath(xpath)
     
     element.send_keys(Keys.ENTER)
     time.sleep(1)
@@ -115,14 +115,25 @@ def CrawlItemInfo(url, pageCount, listIndex0, listIndex1):
         print("ERROR : URL FAULT [009] (url : ", driver.current_url, ")")
         return
 
-    # 가격 비교 탭으로 이동 //?? 여기도 예외처리 필요
+    # 가격 비교 탭으로 이동
     ClickTab("//ul[@class='snb_list']/li[@class='snb_compare']/a[@href='#']")
     tabLink = driver.current_url
     rqResult = requests.get(tabLink)
     bsObj = BeautifulSoup(rqResult.content, "html.parser")
 
+    if bsObj == None:
+        print("ERROR : URL FAULT [015] (url : ", tabLink, ")")
+        return
+
     # 페이지 버튼 검색
     pageButton = bsObj.find('div', {"class" : "sort_content"})
+
+    if pageButton == None:
+        time.sleep(5)
+        pageButton = bsObj.find('div', {"class" : "sort_content"})
+        if pageButton == None:
+            print("ERROR : pageButton FAULT [016] (url : ", tabLink, ")")
+            return
 
     if pageButton.find('div', {"class" : "search_none"}) != None:
         print("가격을 비교할 수 있는 제품이 없습니다. (url : ", tabLink, ")")
@@ -130,7 +141,7 @@ def CrawlItemInfo(url, pageCount, listIndex0, listIndex1):
     elif pageButton.find('div', {"class" : "co_paginate"}) != None:
         pageButton = pageButton.find('div', {"class" : "co_paginate"})
 
-        # 페이지가 한 페이지 뿐임 //?? 이때 제대로 크롤링하는지 확인 필요
+        # 페이지가 한 페이지 뿐임
         if pageButton.find('a', {"href" : "#"}) == None:
             print("페이지가 한 개 뿐입니다. (url : ", tabLink, ")")
         else:
@@ -155,7 +166,7 @@ def CrawlItemInfo(url, pageCount, listIndex0, listIndex1):
     for pageNumber in range(1, pageCount + 1):
         itemList = bsObj.find('ul', {"class" : "goods_list"})
 
-        if itemList == None:#?? 왜 가끔 폴트뜨지?
+        if itemList == None:
             print("ERROR : URL FAULT [003] (url : ", tabLink, ")")
             break
 
@@ -213,8 +224,8 @@ def CrawlDetailItemInfo(url, crawlData, contentIndex):
     tableList = bsObj.find('table', {"class" : "tbl_lst"})
 
     if tableList == None:
-        print("ERROR TABLE LIST NONE [013]")
-        return False #?? 원인 알아야함 아예 tbl list가 안 가져와지는 경우 많음
+        #print("ERROR TABLE LIST NONE [013] (url : ", url, ")")
+        return False 
 
     itemList = tableList.find_all('tr', {"class" : "_itemSection"})
     
@@ -277,10 +288,9 @@ def SaveItemListAsExcel(fileName):
     for index0 in range(0, len(crawlDataList)):
         for index1 in range(0, len(crawlDataList[index0])):
             for index2 in range(0, len(crawlDataList[index0][index1])):
-                print("index1 : ", index1, " " ,len(crawlDataList[index0][index1]), " " , len(crawlDataList[index0]))
-                #print("시트 이름 : ", categoryTextList[index0][index1], " ", index0, " " , index1)
-                #newSheet = workBook.create_sheet(categoryTextList[index0][index1]) //?? 왜 팅기는지 알아야함
-                newSheet = workBook.create_sheet(categoryTextList[index0][0])
+                print("index1 : ", index0, " " , index1,categoryTextList[index0][index1])
+                sheetTitle = categoryTextList[index0][index1].replace('/', '.')
+                newSheet = workBook.create_sheet(sheetTitle)
 
                 excelSheet.append(newSheet)
                 excelSheet[excelSheetIndex].append(["제품 이름", "제품 가격", "판매처", "제품 등록일"])
@@ -294,16 +304,21 @@ def SaveItemListAsExcel(fileName):
     CheckAndCreateFolder(FOLDER_PATH)
 
     workBook.save(FOLDER_PATH + "/" + fileName + ".xlsx")
+    workBook.close()
 
     print("[저장 완료]")
 
 
 # pageCount : 몇 페이지까지 크롤링 할 것인지
 # boolList  : GUI에서 체크한 정보들만 boolList[index0][index1] = True
-def StartCrawling(pageCount, boolList):
+def StartCrawling(pageCount, excelFileName, boolList):
     if pageCount == None:
         pageCount = 1
         print("NO PAGE COUNT [005]")
+
+    if excelFileName == '' or excelFileName == None:
+        excelFileName = "NAVER SHOP DATA"
+        print("NO EXCEL FILE NAME [017]")
 
     if boolList == None:
         boolList = [True for b in range(100)]
@@ -318,10 +333,14 @@ def StartCrawling(pageCount, boolList):
             print(bigCategoryTextList[index0], " 카테고리에서 5초 대기")
             time.sleep(5)
             
-        for index1 in range(0,3):#len(categoryLinkList[index0])):
+        for index1 in range(0, len(categoryLinkList[index0])):
+            if index1 != 0:
+                print(categoryTextList[index0][index1], " 카테고리에서 3초 대기")
+                time.sleep(3)
+            
             CrawlItemInfo(categoryLinkList[index0][index1], pageCount, index0, index1)
-
-    SaveItemListAsExcel("네이버 쇼핑 데이터")
+            
+    SaveItemListAsExcel(excelFileName)
 
 ##
 ##
@@ -357,13 +376,6 @@ def app_init(window):
     maxIndex1Count += 1
 
     OpenWindow(window)
-    
-    ##
-    ##
-    #StartCrawling(None, boolList, len(categoryLinkList) + 1, maxIndex1Count)
-
-    ##?? 파일명 GUI에서
-    #SaveItemListAsExcel("네이버 쇼핑 데이터")
 
 
 def main():    
