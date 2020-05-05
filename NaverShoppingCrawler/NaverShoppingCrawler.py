@@ -288,7 +288,7 @@ def SaveItemListAsExcel(fileName):
     for index0 in range(0, len(crawlDataList)):
         for index1 in range(0, len(crawlDataList[index0])):
             for index2 in range(0, len(crawlDataList[index0][index1])):
-                print("index1 : ", index0, " " , index1,categoryTextList[index0][index1])
+                print("크롤링 완료 : "  , bigCategoryTextList[index0]  , " - " , categoryTextList[index0][index1])
                 sheetTitle = categoryTextList[index0][index1].replace('/', '.')
                 newSheet = workBook.create_sheet(sheetTitle)
 
@@ -325,20 +325,22 @@ def StartCrawling(pageCount, excelFileName, boolList):
         print("NO BOOL LIST [006]")
         
     # 각 링크에서 데이터 크롤링
-    for index0 in range(0, len(boolList)):
-        if boolList[index0] == False:
-            continue
-
+    for index0 in range(0, len(bigCategoryTextList)):
         if index0 != 0:
-            print(bigCategoryTextList[index0], " 카테고리에서 5초 대기")
+            print("카테고리 : ", bigCategoryTextList[index0], " 5초 대기")
             time.sleep(5)
             
         for index1 in range(0, len(categoryLinkList[index0])):
+            if boolList[index0][index1] == False:
+                continue
+
             if index1 != 0:
-                print(categoryTextList[index0][index1], " 카테고리에서 3초 대기")
+                print("세부 카테고리 : ", categoryTextList[index0][index1], " 3초 대기")
                 time.sleep(3)
             
             CrawlItemInfo(categoryLinkList[index0][index1], pageCount, index0, index1)
+        
+        print("----------------------------------------------------")
             
     SaveItemListAsExcel(excelFileName)
 
@@ -346,7 +348,7 @@ def StartCrawling(pageCount, excelFileName, boolList):
 ##
 ##
 def OpenWindow(window):
-    screenWidth = 900
+    screenWidth = 1400
     screenHeight = 480
 
     # Window 크기 및 위치 설정
@@ -354,7 +356,7 @@ def OpenWindow(window):
     rect = myDesktop.screenGeometry()
     window.setGeometry(rect.width() / 2 - screenWidth / 2, rect.height() / 2 - screenHeight / 2, screenWidth, screenHeight)
     
-    window.InitializeWindow(bigCategoryTextList, StartCrawling)
+    window.InitializeWindow(bigCategoryTextList, categoryTextList, StartCrawling)
     
 ##
 ##

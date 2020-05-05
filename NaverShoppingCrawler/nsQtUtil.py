@@ -1,6 +1,7 @@
 import sys
 
-from PyQt5 import QtCore, QtWidgets
+from PyQt5 import QtCore
+from PyQt5 import QtWidgets
 from PyQt5.QtGui import QPainter, QColor, QFont, QPen, QBrush, QPainterPath
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import QSize, Qt
@@ -65,11 +66,12 @@ class MainWindow(QMainWindow):
 
         self.setCentralWidget(self.mainWidget)
         
-        self.firstQFormLayout = []
+        self.firstQVBoxLayout = []
 
-        for index in range(0,2):
-            self.firstQFormLayout.append(QFormLayout())
-            self.firstLayout.addLayout(self.firstQFormLayout[index])
+        self.firstQVBoxLayout.append(QVBoxLayout())
+        self.firstQVBoxLayout.append(QVBoxLayout())
+
+        self.firstLayout.addLayout(self.firstQVBoxLayout[0])
 
         self.labelList = []
         self.lineButtonList  = []
@@ -102,50 +104,104 @@ class MainWindow(QMainWindow):
         labelList.append(self.CreateNewLabel(labelName))
         lineButtonList.append(self.LineEditWithButton(self, buttonName, lambda: buttonMethod))
         
+    def CreateNewButtonForCategory(self, buttonText, buttonMethod, index):
+        return self.CreateNewButton(buttonText, lambda: buttonMethod(index))
+
     ##
     ##
-    def InitializeWindow(self, textList, crawlingMethod):
+    def InitializeWindow(self, bigCategoryTextList, categoryTextList, crawlingMethod):
         self.crawlingMethod = crawlingMethod
 
         # #
         self.qFormLabel = self.CreateNewLabel("카테고리 선택")
         self.qFormLabel.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        self.qFormLabel.setMinimumWidth(150)
-        self.firstQFormLayout[0].addRow(self.qFormLabel)
+        self.qFormLabel.setMinimumWidth(300)
+        self.firstQVBoxLayout[0].addWidget(self.qFormLabel)
 
       #  self.DrawLine(10,10,20,20, Qt.black, 10, Qt.SolidLine)
 
-        self.checkBoxList  = ['' for first in range(len(textList))]
-        self.checkBoxState = [False for first in range(len(textList))]
+        self.bigCategoryButtonList  = ['' for first in range(len(bigCategoryTextList))]
+        self.categoryCheckBoxList = ['' for first in range(len(categoryTextList))]
 
-        for index in range(0, len(textList)):
-            self.checkBoxList[index] = (self.CreateNewCheckBox(textList[index], None))
-            self.firstQFormLayout[0].addRow(self.checkBoxList[index])
+        self.qFrame = [QFrame() for i in range(len(categoryTextList))]
+        self.secondQGridLayout = [QGridLayout() for i in range(len(categoryTextList))]
+
+        for index in range(0, len(categoryTextList)):
+            self.categoryCheckBoxList[index] = ['' for first in range(len(categoryTextList[index]))]
+
+        for index in range(0, len(bigCategoryTextList)):
+            self.bigCategoryButtonList[index] = self.CreateNewButtonForCategory(bigCategoryTextList[index], self.SelectCategory, index)
+            self.firstQVBoxLayout[0].addWidget(self.bigCategoryButtonList[index])
+
+        #
+        self.categoryButtonList = [QPushButton for i in range(0, len(categoryTextList))]
+
+        for index in range(0, len(categoryTextList)): #?? 하나가 더 많다 이상하게
+            row = 0
+            column = 0
+
+            self.qFrame[index].setLayout(self.secondQGridLayout[index])
+            self.qFrame[index].hide()
+            self.firstLayout.addWidget(self.qFrame[index])
+
+            self.categoryButtonList[index] = self.CreateNewButtonForCategory("전체 체크", self.CheckAllSmallCategory, index)
+            self.secondQGridLayout[index].addWidget(self.categoryButtonList[index], row, column)
+            
+            for jindex in range(0, len(categoryTextList[index])):
+
+                row += 1
+                if row >= 20:
+                    column += 1
+                    row = 0
+
+                self.categoryCheckBoxList[index][jindex] = self.CreateNewCheckBox(categoryTextList[index][jindex], None)
+                self.secondQGridLayout[index].addWidget(self.categoryCheckBoxList[index][jindex], row, column)
+                
 
         self.pageCount     = self.LabelWithLineEdit(self, "PAGE COUNT")
         self.excelFileName = self.LabelWithLineEdit(self, "FILE NAME")
         self.startButton   = self.CreateNewButton("시작", self.StartCrawling)
 
+        ##
+        self.firstLayout.addLayout(self.firstQVBoxLayout[1])
+
         for index in range(0, len(self.labelList)):
-            self.firstQFormLayout[1].addRow(self.labelList[index], self.lineButtonList[index])
+            self.firstQVBoxLayout[1].addWidget(self.labelList[index], self.lineButtonList[index])
         
-        self.firstQFormLayout[1].addRow(self.pageCount)
-        self.firstQFormLayout[1].addRow(self.excelFileName)
-        self.firstQFormLayout[1].addRow(self.startButton)
+        self.firstQVBoxLayout[1].addWidget(self.pageCount)
+        self.firstQVBoxLayout[1].addWidget(self.excelFileName)
+        self.firstQVBoxLayout[1].addWidget(self.startButton)
 
     ##
     def StartCrawling(self):
         print("크롤링 시작\n")
 
         # create bool List
-        boolList = [False for b in range(len(self.checkBoxList))]
-        for index in range(0, len(self.checkBoxList)):
-            boolList[index] = self.checkBoxList[index].isChecked()
+        boolList = [False for first in range(len(self.categoryCheckBoxList))]
+        for index in range(0, len(self.categoryCheckBoxList)):
+            boolList[index] = [False for second in range(len(self.categoryCheckBoxList[index]))]
+            for jindex in range(0, len(self.categoryCheckBoxList[index])):
+                boolList[index][jindex] = self.categoryCheckBoxList[index][jindex].isChecked()
 
         self.crawlingMethod(int(self.pageCount.lineEdit.text()), self.excelFileName.lineEdit.text(), boolList)
 
-    def ChangeBoolState(self, index):
-        self.checkBoxState[index] = self.checkBoxList[index].isChecked()
+    def CheckAllSmallCategory(self, index):
+        if self.categoryCheckBoxList[index][0].isChecked() == True:
+            boolean = False
+        else:
+            boolean = True
+
+        for i in range(0, len(self.categoryCheckBoxList[index])):
+            self.categoryCheckBoxList[index][i].setChecked(boolean)
+
+    def SelectCategory(self, index):
+        for i in range(0, len(self.bigCategoryButtonList)):
+            if i != index:
+                self.qFrame[i].hide()
+            else:
+                self.qFrame[i].show()
+
+
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
