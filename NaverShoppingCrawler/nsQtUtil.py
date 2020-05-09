@@ -173,8 +173,21 @@ class MainWindow(QMainWindow):
         self.firstQVBoxLayout[1].addWidget(self.startButton)
 
     ##
+    def OpenPopupMessageBox(self, title, content): 
+        buttonReply = QMessageBox.information(
+            self, title, content, 
+            QMessageBox.Yes)
+
+
+    ##
     def StartCrawling(self):
-        print("크롤링 시작\n")
+        if self.pageCount.lineEdit.text() == "" or self.excelFileName.lineEdit.text() == "":
+            self.OpenPopupMessageBox("오류", "내용을 입력하고 크롤링을 시작해주세요.")
+            return
+        
+        print("----------------------------------------------------")
+        print("크롤링 시작")
+        print("----------------------------------------------------")
 
         # create bool List
         boolList = [False for first in range(len(self.categoryCheckBoxList))]
@@ -184,7 +197,7 @@ class MainWindow(QMainWindow):
                 boolList[index][jindex] = self.categoryCheckBoxList[index][jindex].isChecked()
 
         self.crawlingMethod(int(self.pageCount.lineEdit.text()), self.excelFileName.lineEdit.text(), boolList)
-
+        
     def CheckAllSmallCategory(self, index):
         if self.categoryCheckBoxList[index][0].isChecked() == True:
             boolean = False

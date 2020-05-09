@@ -202,7 +202,7 @@ def CrawlItemInfo(url, pageCount, listIndex0, listIndex1):
                             bPriceCheck = 'href' in itemPriceContent.attrs
                             if bPriceCheck == True:
                                 itemSellLink = itemPriceContent.attrs['href'].strip()
-                                CrawlDetailItemInfo(itemSellLink, crawlData, contentIndex)
+                                CrawlDetailItemInfo(itemSellLink, crawlData, contentIndex, itemTitle.text.strip())
         
         # 다음 페이지로 이동
         tabLink = tabLink.replace(str(pageNumber), str(pageNumber + 1), 1)
@@ -217,53 +217,70 @@ def CrawlItemInfo(url, pageCount, listIndex0, listIndex1):
     crawlDataList[listIndex0][listIndex1].append(crawlData)
                
 # 여러 판매처의 아이템 정보 가져오기
-def CrawlDetailItemInfo(url, crawlData, contentIndex):    
+def CrawlDetailItemInfo(url, crawlData, contentIndex, itemTitle):    
     rqResult = requests.get(url)
     bsObj = BeautifulSoup(rqResult.content, "html.parser")
-    
+
+    ##
+    # INFO INNER
+    infoInner = bsObj.find('div', {"class" : "info_inner"})
+
+    if infoInner == None:
+        print("ERROR INFO INNER NONE [019] (아이템 이름 : ", itemTitle, ")")
+        return False
+
+    infoText = infoInner.text.strip()
+    infoText = infoText[:infoText.find("찜하기")]#?? 제조사 / 브랜드 / 등록일 로 없어도 끼워넣기
+    infoTextList = infoText.split("\n")
+
+    for index in range(0,len(infoTextList)):
+        if infoTextList[index] == "":
+            continue
+
+        crawlData.itemDataList[contentIndex].append(infoTextList[index])
+
+    ##
+    # TABLE LIST
     tableList = bsObj.find('table', {"class" : "tbl_lst"})
 
     if tableList == None:
-        #print("ERROR TABLE LIST NONE [013] (url : ", url, ")")
-        return False 
+        print("ERROR TABLE LIST NONE [013] (아이템 이름 : ", itemTitle, ")")
+        return False
 
-    itemList = tableList.find_all('tr', {"class" : "_itemSection"})
+    item = tableList.find('tr', {"class" : "_itemSection"})
     
-    for item in itemList:
-        if hasattr(item, 'attrs') and 'class' in item.attrs:
-            # PRICE
-            price = item.find('td', {"class" : "price"})
-            crawlData.itemDataList[contentIndex].append(price.text.strip())
+    if hasattr(item, 'attrs') and 'class' in item.attrs:
+        # PRICE
+        price = item.find('td', {"class" : "price"})
+        crawlData.itemDataList[contentIndex].append(price.text.strip())
 
-            mall = item.find('span', {"class" : "mall"})
-            if hasattr(mall.contents[0], 'attrs'):
-                bCheck = 'href' in mall.contents[0].attrs
-                if bCheck == True:
-                    itemSellLink = mall.contents[0].attrs['href'].strip()
-                    crawlData.itemDataList[contentIndex].append(itemSellLink)
-                    
-                else:
-                    crawlData.itemDataList[contentIndex].append("")
-            else:
-                    crawlData.itemDataList[contentIndex].append("")
-
-            # GIFT
-            gift = item.find('td', {"class" : "gift"})
-            if gift != None:
-                crawlData.itemDataList[contentIndex].append(gift.text.strip())
-            else:                
-                crawlData.itemDataList[contentIndex].append("")  
-
-
-            # INFO
-            info = item.find('td', {"class" : "info"})
-            if info != None:
-                crawlData.itemDataList[contentIndex].append(info.text.strip())
+        mall = item.find('span', {"class" : "mall"})
+        if hasattr(mall.contents[0], 'attrs'):
+            bCheck = 'href' in mall.contents[0].attrs
+            if bCheck == True:
+                itemSellLink = mall.contents[0].attrs['href'].strip()
+                crawlData.itemDataList[contentIndex].append(itemSellLink)
+                
             else:
                 crawlData.itemDataList[contentIndex].append("")
+        else:
+                crawlData.itemDataList[contentIndex].append("")
 
-            
-            crawlData.itemDataList[contentIndex].append("/--/")
+        # GIFT
+        gift = item.find('td', {"class" : "gift"})
+        if gift != None:
+            crawlData.itemDataList[contentIndex].append(gift.text.strip())
+        else:                
+            crawlData.itemDataList[contentIndex].append("")  
+
+
+        # INFO
+        info = item.find('td', {"class" : "info"})
+        if info != None:
+            crawlData.itemDataList[contentIndex].append(info.text.strip())
+        else:
+            crawlData.itemDataList[contentIndex].append("")
+
     return True
 
 ##
@@ -308,6 +325,11 @@ def SaveItemListAsExcel(fileName):
 
     print("[저장 완료]")
 
+def CheckBoolList(boolList):
+    for index in range(0, len(boolList)):
+        if boolList[index] == True:
+            return True
+    return False
 
 # pageCount : 몇 페이지까지 크롤링 할 것인지
 # boolList  : GUI에서 체크한 정보들만 boolList[index0][index1] = True
@@ -326,17 +348,21 @@ def StartCrawling(pageCount, excelFileName, boolList):
         
     # 각 링크에서 데이터 크롤링
     for index0 in range(0, len(bigCategoryTextList)):
+        if CheckBoolList(boolList[index0]) == False:
+            print("카테고리 \"", bigCategoryTextList[index0], "\" : 비어 있음")
+            continue
+
         if index0 != 0:
-            print("카테고리 : ", bigCategoryTextList[index0], " 5초 대기")
-            time.sleep(5)
+            print("카테고리 \"", bigCategoryTextList[index0], "\" : 3초 대기")
+            time.sleep(3)
             
         for index1 in range(0, len(categoryLinkList[index0])):
             if boolList[index0][index1] == False:
                 continue
 
             if index1 != 0:
-                print("세부 카테고리 : ", categoryTextList[index0][index1], " 3초 대기")
-                time.sleep(3)
+                print("세부 카테고리 \"", categoryTextList[index0][index1], "\" : 1초 대기")
+                time.sleep(1)
             
             CrawlItemInfo(categoryLinkList[index0][index1], pageCount, index0, index1)
         
