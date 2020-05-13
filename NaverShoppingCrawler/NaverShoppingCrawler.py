@@ -10,6 +10,7 @@ from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 
 import openpyxl
+from openpyxl import load_workbook
 
 from nsQtUtil import *
 from PyQt5.QtWidgets import *
@@ -27,8 +28,11 @@ bigCategoryTextList = []
 categoryTextList = [[]]
 categoryLinkList = [[]]
 
+# 저장할 엑셀 정보
+#gExcelFileName = ''
+
 # 크롤링한 데이터
-crawlDataList = [[[] for first in range(100)] for second in range(50)]
+crawlDataList = ''#[[[] for first in range(100)] for second in range(50)]
 
 # webDriver . Chrome driver Ver.80
 if platform.system() == "Windows":
@@ -91,20 +95,21 @@ def CrawlAllCategory(html, categoryIndex):
 def ClickTab(xpath):
     if xpath == None:
         print("ERROR XPATH NULL [007]")
-        return
+        return False
     
-    if driver.find_element_by_xpath(xpath) == None:
-        print("ERROR element NULL [008]")
-        return
+    try:
+        element = driver.find_element_by_xpath(xpath)
+        element.send_keys(Keys.ENTER)
+        time.sleep(1)
 
-    element = driver.find_element_by_xpath(xpath)
+        return True
+    except:
+        print("ERROR element NULL [008] : " + xpath)
+        return False
     
-    element.send_keys(Keys.ENTER)
-    time.sleep(1)
-
 
 # 모든 아이템의 정보 가져오기
-def CrawlItemInfo(url, pageCount, listIndex0, listIndex1):
+def CrawlItemInfo(url, fileName, pageCount, listIndex0, listIndex1):
     driver.get(url)
 
     # 가격 비교 탭이 있는지 검사
@@ -122,7 +127,11 @@ def CrawlItemInfo(url, pageCount, listIndex0, listIndex1):
         return
 
     # 가격 비교 탭으로 이동
-    ClickTab("//ul[@class='snb_list']/li[@class='snb_compare']/a[@href='#']")
+    result = ClickTab("//ul[@class='snb_list']/li[@class='snb_compare']/a[@href='#']")
+
+    if result == False:
+        return
+
     tabLink = driver.current_url
     rqResult = requests.get(tabLink)
     bsObj = BeautifulSoup(rqResult.content, "html.parser")
@@ -149,7 +158,7 @@ def CrawlItemInfo(url, pageCount, listIndex0, listIndex1):
 
         # 페이지가 한 페이지 뿐임
         if pageButton.find('a', {"href" : "#"}) == None:
-            print("페이지가 한 개 뿐입니다. (url : ", tabLink, ")")
+            print("해당 카테고리는 페이지가 한 개 뿐입니다. (url : ", tabLink, ")")
         else:
             # 두번째 탭 클릭
             ClickTab("//div[@class='co_paginate']/a[@href='#']")
@@ -248,8 +257,10 @@ def CrawlItemInfo(url, pageCount, listIndex0, listIndex1):
             print("페이지가 입력하신 기준 페이지보다 적습니다. [010] (url : ", tabLink, ")")
             break
 
-    print("세부 카테고리 - \"" , categoryTextList[listIndex0][listIndex1], "\" : 크롤링 데이터 추가")
-    crawlDataList[listIndex0][listIndex1].append(crawlData)
+    SaveItemListAsExcelEx(crawlData, fileName, listIndex0, listIndex1)
+
+    #print("세부 카테고리 - \"" , categoryTextList[listIndex0][listIndex1], "\" : 크롤링 데이터 추가")
+    #crawlDataList[listIndex0][listIndex1].append(crawlData)
                
 # 여러 판매처의 아이템 정보 가져오기
 def CrawlDetailItemInfo(url, crawlData, contentIndex, itemTitle):    
@@ -359,6 +370,31 @@ def CheckAndCreateFolder(folderPath):
     except OSError:
         print ("Error: Creating folder [004]: " + folderPath)
 
+
+# 엑셀 생성
+def CreateExcelFile(fileName):
+    workBook = openpyxl.Workbook()
+    workBook.save(FOLDER_PATH + "/" + fileName + ".xlsx")
+    workBook.close()
+
+# 엑셀 매번 저장
+def SaveItemListAsExcelEx(crawlData, fileName, index0, index1):
+    workBook = load_workbook(FOLDER_PATH + "/" + fileName + ".xlsx")
+    
+    sheetTitle = categoryTextList[index0][index1].replace('/', '.')
+    newSheet = workBook.create_sheet(sheetTitle)
+
+    newSheet.append(["제품 이름", "제품 가격", "판매처", "리뷰", "제품 등록일", "제조사", "브랜드", "링크", "배송비", "기타"])
+    
+    for index in range(0, len(crawlData.itemDataList)):
+        newSheet.append(crawlData.itemDataList[index])
+        
+    workBook.save(FOLDER_PATH + "/" + fileName + ".xlsx")
+    workBook.close()
+
+    print("크롤링 완료 : "  , bigCategoryTextList[index0]  , " - " , categoryTextList[index0][index1])
+
+
 # 액셀 저장
 def SaveItemListAsExcel(fileName):
     workBook = openpyxl.Workbook()
@@ -409,6 +445,9 @@ def StartCrawling(pageCount, excelFileName, boolList):
     if boolList == None:
         boolList = [True for b in range(100)]
         print("NO BOOL LIST [006]")
+
+    CheckAndCreateFolder(FOLDER_PATH)
+    CreateExcelFile(excelFileName)
         
     # 각 링크에서 데이터 크롤링
     for index0 in range(0, len(bigCategoryTextList)):
@@ -428,11 +467,12 @@ def StartCrawling(pageCount, excelFileName, boolList):
                 print("세부 카테고리 - \"", categoryTextList[index0][index1], "\" : 1초 대기")
                 time.sleep(1)
             
-            CrawlItemInfo(categoryLinkList[index0][index1], pageCount, index0, index1)
+            CrawlItemInfo(categoryLinkList[index0][index1], excelFileName, pageCount, index0, index1)
         
         print("----------------------------------------------------")
-            
-    SaveItemListAsExcel(excelFileName)
+       
+    print("크롤링 종료 : " + excelFileName + " 저장 완료")
+    #SaveItemListAsExcel(excelFileName)
 
 ##
 ##
