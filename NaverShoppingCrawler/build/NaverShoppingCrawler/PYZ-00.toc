@@ -59,9 +59,17 @@
    'c:\\program files (x86)\\microsoft visual '
    'studio\\shared\\python36_64\\lib\\ipaddress.py',
    'PYMODULE'),
-  ('quopri',
+  ('tokenize',
    'c:\\program files (x86)\\microsoft visual '
-   'studio\\shared\\python36_64\\lib\\quopri.py',
+   'studio\\shared\\python36_64\\lib\\tokenize.py',
+   'PYMODULE'),
+  ('token',
+   'c:\\program files (x86)\\microsoft visual '
+   'studio\\shared\\python36_64\\lib\\token.py',
+   'PYMODULE'),
+  ('stringprep',
+   'c:\\program files (x86)\\microsoft visual '
+   'studio\\shared\\python36_64\\lib\\stringprep.py',
    'PYMODULE'),
   ('bz2',
    'c:\\program files (x86)\\microsoft visual '
@@ -87,29 +95,9 @@
    'c:\\program files (x86)\\microsoft visual '
    'studio\\shared\\python36_64\\lib\\_compression.py',
    'PYMODULE'),
-  ('stringprep',
+  ('quopri',
    'c:\\program files (x86)\\microsoft visual '
-   'studio\\shared\\python36_64\\lib\\stringprep.py',
-   'PYMODULE'),
-  ('tokenize',
-   'c:\\program files (x86)\\microsoft visual '
-   'studio\\shared\\python36_64\\lib\\tokenize.py',
-   'PYMODULE'),
-  ('token',
-   'c:\\program files (x86)\\microsoft visual '
-   'studio\\shared\\python36_64\\lib\\token.py',
-   'PYMODULE'),
-  ('tracemalloc',
-   'c:\\program files (x86)\\microsoft visual '
-   'studio\\shared\\python36_64\\lib\\tracemalloc.py',
-   'PYMODULE'),
-  ('pickle',
-   'c:\\program files (x86)\\microsoft visual '
-   'studio\\shared\\python36_64\\lib\\pickle.py',
-   'PYMODULE'),
-  ('pprint',
-   'c:\\program files (x86)\\microsoft visual '
-   'studio\\shared\\python36_64\\lib\\pprint.py',
+   'studio\\shared\\python36_64\\lib\\quopri.py',
    'PYMODULE'),
   ('doctest',
    'c:\\program files (x86)\\microsoft visual '
@@ -118,6 +106,22 @@
   ('unittest',
    'c:\\program files (x86)\\microsoft visual '
    'studio\\shared\\python36_64\\lib\\unittest\\__init__.py',
+   'PYMODULE'),
+  ('ntpath',
+   'c:\\program files (x86)\\microsoft visual '
+   'studio\\shared\\python36_64\\lib\\ntpath.py',
+   'PYMODULE'),
+  ('string',
+   'c:\\program files (x86)\\microsoft visual '
+   'studio\\shared\\python36_64\\lib\\string.py',
+   'PYMODULE'),
+  ('genericpath',
+   'c:\\program files (x86)\\microsoft visual '
+   'studio\\shared\\python36_64\\lib\\genericpath.py',
+   'PYMODULE'),
+  ('stat',
+   'c:\\program files (x86)\\microsoft visual '
+   'studio\\shared\\python36_64\\lib\\stat.py',
    'PYMODULE'),
   ('unittest.signals',
    'c:\\program files (x86)\\microsoft visual '
@@ -139,6 +143,14 @@
    'c:\\program files (x86)\\microsoft visual '
    'studio\\shared\\python36_64\\lib\\unittest\\loader.py',
    'PYMODULE'),
+  ('fnmatch',
+   'c:\\program files (x86)\\microsoft visual '
+   'studio\\shared\\python36_64\\lib\\fnmatch.py',
+   'PYMODULE'),
+  ('posixpath',
+   'c:\\program files (x86)\\microsoft visual '
+   'studio\\shared\\python36_64\\lib\\posixpath.py',
+   'PYMODULE'),
   ('unittest.suite',
    'c:\\program files (x86)\\microsoft visual '
    'studio\\shared\\python36_64\\lib\\unittest\\suite.py',
@@ -147,13 +159,13 @@
    'c:\\program files (x86)\\microsoft visual '
    'studio\\shared\\python36_64\\lib\\unittest\\case.py',
    'PYMODULE'),
+  ('pprint',
+   'c:\\program files (x86)\\microsoft visual '
+   'studio\\shared\\python36_64\\lib\\pprint.py',
+   'PYMODULE'),
   ('logging',
    'c:\\program files (x86)\\microsoft visual '
    'studio\\shared\\python36_64\\lib\\logging\\__init__.py',
-   'PYMODULE'),
-  ('string',
-   'c:\\program files (x86)\\microsoft visual '
-   'studio\\shared\\python36_64\\lib\\string.py',
    'PYMODULE'),
   ('unittest.result',
    'c:\\program files (x86)\\microsoft visual '
@@ -198,10 +210,6 @@
   ('lzma',
    'c:\\program files (x86)\\microsoft visual '
    'studio\\shared\\python36_64\\lib\\lzma.py',
-   'PYMODULE'),
-  ('stat',
-   'c:\\program files (x86)\\microsoft visual '
-   'studio\\shared\\python36_64\\lib\\stat.py',
    'PYMODULE'),
   ('email.message',
    'c:\\program files (x86)\\microsoft visual '
@@ -319,14 +327,6 @@
    'c:\\program files (x86)\\microsoft visual '
    'studio\\shared\\python36_64\\lib\\socketserver.py',
    'PYMODULE'),
-  ('posixpath',
-   'c:\\program files (x86)\\microsoft visual '
-   'studio\\shared\\python36_64\\lib\\posixpath.py',
-   'PYMODULE'),
-  ('genericpath',
-   'c:\\program files (x86)\\microsoft visual '
-   'studio\\shared\\python36_64\\lib\\genericpath.py',
-   'PYMODULE'),
   ('mimetypes',
    'c:\\program files (x86)\\microsoft visual '
    'studio\\shared\\python36_64\\lib\\mimetypes.py',
@@ -443,17 +443,17 @@
    'c:\\program files (x86)\\microsoft visual '
    'studio\\shared\\python36_64\\lib\\__future__.py',
    'PYMODULE'),
+  ('tracemalloc',
+   'c:\\program files (x86)\\microsoft visual '
+   'studio\\shared\\python36_64\\lib\\tracemalloc.py',
+   'PYMODULE'),
+  ('pickle',
+   'c:\\program files (x86)\\microsoft visual '
+   'studio\\shared\\python36_64\\lib\\pickle.py',
+   'PYMODULE'),
   ('_compat_pickle',
    'c:\\program files (x86)\\microsoft visual '
    'studio\\shared\\python36_64\\lib\\_compat_pickle.py',
-   'PYMODULE'),
-  ('ntpath',
-   'c:\\program files (x86)\\microsoft visual '
-   'studio\\shared\\python36_64\\lib\\ntpath.py',
-   'PYMODULE'),
-  ('fnmatch',
-   'c:\\program files (x86)\\microsoft visual '
-   'studio\\shared\\python36_64\\lib\\fnmatch.py',
    'PYMODULE'),
   ('CrawlData',
    'C:\\Users\\134461\\Desktop\\_GYUTAE\\_PROJECT\\NaverShoppingCrawler\\NaverShoppingCrawler\\CrawlData.py',
