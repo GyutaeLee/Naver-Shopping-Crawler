@@ -61,7 +61,7 @@ def CrawlBigCategory(html):
     itemList = bsObj.find_all('ul', {"class" :"co_category_list"})
     
     if bsObj == None:
-        print("ERROR : URL FAULT [000] (url : ", url, ")")
+        print("아무것도 없는 카테고리 입니다. (url : ", url, ")")
         return
 
     for link in itemList[1].find_all('a'):
@@ -110,7 +110,11 @@ def ClickTab(xpath):
 
 # 모든 아이템의 정보 가져오기
 def CrawlItemInfo(url, fileName, pageCount, listIndex0, listIndex1):
-    driver.get(url)
+    try:
+        driver.get(url)
+    except:
+        print("ERROR url ERROR [009] : " + url)
+        return
 
     # 가격 비교 탭이 있는지 검사
     rqResult = requests.get(driver.current_url)
